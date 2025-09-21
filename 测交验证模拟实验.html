@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雌雄配子随机组合模拟实验</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f9fc;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .experiment-area {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .bucket-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px 20px;
+        }
+        .bucket {
+            width: 150px;
+            height: 200px;
+            background: linear-gradient(to bottom, #e0e0e0, #b0b0b0);
+            border-radius: 0 0 75px 75px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+            padding: 10px;
+        }
+        .bucket-label {
+            position: absolute;
+            top: 10px;
+            font-weight: bold;
+            font-size: 20px;
+            color: #2c3e50;
+            text-align: center;
+            width: 100%;
+        }
+        .bucket-organ {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .ball {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+        }
+        .orange {
+            background-color: #ff8c00;
+        }
+        .blue {
+            background-color: #1e90ff;
+        }
+        .gene-selection {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gene-selection select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .auto-simulate {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 60px;
+        }
+        .results {
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        .combination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .combination-ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 10px;
+            color: white;
+            font-size: 20px;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) rotate(0); }
+            20% { transform: translateX(-10px) rotate(-5deg); }
+            40% { transform: translateX(10px) rotate(5deg); }
+            60% { transform: translateX(-10px) rotate(-5deg); }
+            80% { transform: translateX(10px) rotate(5deg); }
+        }
+        .shaking {
+            animation: shake 0.5s ease-in-out;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>雌雄配子随机组合模拟实验</h1>
+        
+        <div class="instructions">
+            <p>本实验用甲、乙两个小桶分别代表雌雄生殖器官，甲、乙小桶内的彩球分别代表雌、雄配子，用不同彩球的随机组合，模拟生物在生殖过程中，雌、雄配子的随机组合。</p>
+        </div>
+        
+        <div class="experiment-area">
+            <div class="bucket-container">
+                <div class="gene-selection">
+                    <label>甲桶基因型:</label>
+                    <select id="geneType1">
+                        <option value="Dd">Dd (杂合子)</option>
+                        <option value="DD">DD (纯合显性)</option>
+                        <option value="dd">dd (纯合隐性)</option>
+                    </select>
+                </div>
+                <div class="bucket" id="bucket1">
+                    <div class="bucket-label">甲</div>
+                    <!-- 小球将通过JS动态添加 -->
+                </div>
+                <div class="bucket-organ">雌性生殖器官</div>
+            </div>
+            
+            <div class="bucket-container">
+                <div class="gene-selection">
+                    <label>乙桶基因型:</label>
+                    <select id="geneType2">
+                        <option value="Dd">Dd (杂合子)</option>
+                        <option value="DD">DD (纯合显性)</option>
+                        <option value="dd">dd (纯合隐性)</option>
+                    </select>
+                </div>
+                <div class="bucket" id="bucket2">
+                    <div class="bucket-label">乙</div>
+                    <!-- 小球将通过JS动态添加 -->
+                </div>
+                <div class="bucket-organ">雄性生殖器官</div>
+            </div>
+        </div>
+        
+        <div class="combination" id="combinationResult">
+            <!-- 组合结果将在这里显示 -->
+        </div>
+        
+        <div class="controls">
+            <button id="shakeButton">晃动小桶</button>
+            <button id="grabButton">抓取组合</button>
+            <div class="auto-simulate">
+                <input type="number" id="simulationCount" min="1" max="1000" value="10">
+                <button id="autoSimulateButton">自动模拟</button>
+            </div>
+            <button id="resetButton">重置实验</button>
+        </div>
+        
+        <div class="results">
+            <h2>实验结果统计</h2>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>组合类型</th>
+                        <th>数量</th>
+                        <th>百分比</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <!-- 动态生成结果行 -->
+                </tbody>
+            </table>
+            
+            <div class="chart-container">
+                <canvas id="resultsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化变量
+            const bucket1 = document.getElementById('bucket1');
+            const bucket2 = document.getElementById('bucket2');
+            const shakeButton = document.getElementById('shakeButton');
+            const grabButton = document.getElementById('grabButton');
+            const autoSimulateButton = document.getElementById('autoSimulateButton');
+            const resetButton = document.getElementById('resetButton');
+            const simulationCountInput = document.getElementById('simulationCount');
+            const combinationResult = document.getElementById('combinationResult');
+            const geneType1 = document.getElementById('geneType1');
+            const geneType2 = document.getElementById('geneType2');
+            const resultsBody = document.getElementById('resultsBody');
+            
+            // 统计变量
+            let counts = {}; // 存储各种组合的数量
+            let totalSimulations = 0;
+            let possibleCombinations = []; // 可能的组合类型
+            
+            // 图表变量
+            let resultsChart = null;
+            
+            // 初始化小桶
+            function initializeBuckets() {
+                // 清空小桶
+                bucket1.innerHTML = '<div class="bucket-label">甲</div>';
+                bucket2.innerHTML = '<div class="bucket-label">乙</div>';
+                
+                // 获取选择的基因型
+                const gene1 = geneType1.value;
+                const gene2 = geneType2.value;
+                
+                // 确定可能的组合类型
+                determinePossibleCombinations(gene1, gene2);
+                
+                // 更新结果表格
+                updateResultsTable();
+                
+                // 根据基因型添加小球
+                addBallsToBucket(bucket1, gene1);
+                addBallsToBucket(bucket2, gene2);
+            }
+            
+            // 确定可能的组合类型
+            function determinePossibleCombinations(gene1, gene2) {
+                // 清空计数
+                counts = {};
+                possibleCombinations = [];
+                
+                // 获取所有可能的等位基因
+                const genes1 = gene1.split('');
+                const genes2 = gene2.split('');
+                
+                // 生成所有可能的组合
+                const combinations = new Set();
+                for (const g1 of genes1) {
+                    for (const g2 of genes2) {
+                        // 按字母顺序排序，使Dd和dD都显示为Dd
+                        const sorted = [g1, g2].sort();
+                        const combination = sorted.join('');
+                        combinations.add(combination);
+                    }
+                }
+                
+                // 转换为数组并排序
+                possibleCombinations = Array.from(combinations).sort();
+                
+                // 初始化计数
+                possibleCombinations.forEach(comb => {
+                    counts[comb] = 0;
+                });
+            }
+            
+            // 更新结果表格
+            function updateResultsTable() {
+                // 清空表格
+                resultsBody.innerHTML = '';
+                
+                // 添加行
+                possibleCombinations.forEach(comb => {
+                    const row = document.createElement('tr');
+                    
+                    const typeCell = document.createElement('td');
+                    typeCell.textContent = comb;
+                    
+                    const countCell = document.createElement('td');
+                    countCell.id = `count-${comb}`;
+                    countCell.textContent = '0';
+                    
+                    const percentCell = document.createElement('td');
+                    percentCell.id = `percent-${comb}`;
+                    percentCell.textContent = '0%';
+                    
+                    row.appendChild(typeCell);
+                    row.appendChild(countCell);
+                    row.appendChild(percentCell);
+                    
+                    resultsBody.appendChild(row);
+                });
+            }
+            
+            // 根据基因型添加小球到桶中
+            function addBallsToBucket(bucket, geneType) {
+                if (geneType === 'Dd') {
+                    // 添加10个D和10个d
+                    for (let i = 0; i < 10; i++) {
+                        const orangeBall = document.createElement('div');
+                        orangeBall.className = 'ball orange';
+                        orangeBall.textContent = 'D';
+                        orangeBall.dataset.type = 'D';
+                        bucket.appendChild(orangeBall);
+                        
+                        const blueBall = document.createElement('div');
+                        blueBall.className = 'ball blue';
+                        blueBall.textContent = 'd';
+                        blueBall.dataset.type = 'd';
+                        bucket.appendChild(blueBall);
+                    }
+                } else if (geneType === 'DD') {
+                    // 添加20个D
+                    for (let i = 0; i < 20; i++) {
+                        const orangeBall = document.createElement('div');
+                        orangeBall.className = 'ball orange';
+                        orangeBall.textContent = 'D';
+                        orangeBall.dataset.type = 'D';
+                        bucket.appendChild(orangeBall);
+                    }
+                } else if (geneType === 'dd') {
+                    // 添加20个d
+                    for (let i = 0; i < 20; i++) {
+                        const blueBall = document.createElement('div');
+                        blueBall.className = 'ball blue';
+                        blueBall.textContent = 'd';
+                        blueBall.dataset.type = 'd';
+                        bucket.appendChild(blueBall);
+                    }
+                }
+            }
+            
+            // 晃动小桶
+            function shakeBuckets() {
+                bucket1.classList.add('shaking');
+                bucket2.classList.add('shaking');
+                
+                setTimeout(() => {
+                    bucket1.classList.remove('shaking');
+                    bucket2.classList.remove('shaking');
+                }, 500);
+            }
+            
+            // 随机获取小球
+            function getRandomBall(bucket) {
+                const balls = bucket.querySelectorAll('.ball');
+                const randomIndex = Math.floor(Math.random() * balls.length);
+                return {
+                    element: balls[randomIndex],
+                    type: balls[randomIndex].dataset.type,
+                    color: balls[randomIndex].classList.contains('orange') ? 'orange' : 'blue'
+                };
+            }
+            
+            // 抓取组合
+            function grabCombination() {
+                const ball1 = getRandomBall(bucket1);
+                const ball2 = getRandomBall(bucket2);
+                
+                // 显示组合结果
+                combinationResult.innerHTML = `
+                    <div class="combination-ball" style="background-color: ${ball1.color === 'orange' ? '#ff8c00' : '#1e90ff'}">${ball1.type}</div>
+                    +
+                    <div class="combination-ball" style="background-color: ${ball2.color === 'orange' ? '#ff8c00' : '#1e90ff'}">${ball2.type}</div>
+                    =
+                    <div>${ball1.type}${ball2.type}</div>
+                `;
+                
+                // 更新统计
+                updateStatistics(ball1.type, ball2.type);
+            }
+            
+            // 更新统计
+            function updateStatistics(type1, type2) {
+                totalSimulations++;
+                
+                // 确定组合类型（按字母顺序排序）
+                const sortedTypes = [type1, type2].sort();
+                const combination = sortedTypes.join('');
+                
+                // 更新计数
+                if (counts.hasOwnProperty(combination)) {
+                    counts[combination]++;
+                } else {
+                    // 如果遇到未预期的组合，添加到计数中
+                    counts[combination] = 1;
+                    if (!possibleCombinations.includes(combination)) {
+                        possibleCombinations.push(combination);
+                        possibleCombinations.sort();
+                        updateResultsTable();
+                    }
+                }
+                
+                // 更新表格
+                possibleCombinations.forEach(comb => {
+                    document.getElementById(`count-${comb}`).textContent = counts[comb] || 0;
+                    
+                    const percent = totalSimulations > 0 ? 
+                        ((counts[comb] || 0) / totalSimulations * 100).toFixed(1) : 0;
+                    document.getElementById(`percent-${comb}`).textContent = percent + '%';
+                });
+                
+                // 更新图表
+                updateChart();
+            }
+            
+            // 更新图表
+            function updateChart() {
+                const ctx = document.getElementById('resultsChart').getContext('2d');
+                
+                if (resultsChart) {
+                    resultsChart.destroy();
+                }
+                
+                // 准备图表数据
+                const labels = possibleCombinations;
+                const data = possibleCombinations.map(comb => counts[comb] || 0);
+                const backgroundColors = [
+                    'rgba(255, 140, 0, 0.7)',
+                    'rgba(147, 112, 219, 0.7)',
+                    'rgba(30, 144, 255, 0.7)',
+                    'rgba(220, 20, 60, 0.7)',
+                    'rgba(46, 139, 87, 0.7)'
+                ];
+                
+                resultsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '数量',
+                            data: data,
+                            backgroundColor: backgroundColors.slice(0, labels.length),
+                            borderColor: backgroundColors.slice(0, labels.length).map(color => color.replace('0.7', '1')),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '数量'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '组合类型'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '配子组合统计'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 自动模拟
+            function autoSimulate() {
+                const count = parseInt(simulationCountInput.value) || 10;
+                
+                for (let i = 0; i < count; i++) {
+                    // 使用setTimeout来让浏览器有机会更新UI
+                    setTimeout(() => {
+                        const ball1 = getRandomBall(bucket1);
+                        const ball2 = getRandomBall(bucket2);
+                        updateStatistics(ball1.type, ball2.type);
+                    }, 0);
+                }
+                
+                combinationResult.innerHTML = `已完成 ${count} 次自动模拟`;
+            }
+            
+            // 重置实验
+            function resetExperiment() {
+                // 重置计数
+                possibleCombinations.forEach(comb => {
+                    counts[comb] = 0;
+                });
+                totalSimulations = 0;
+                
+                // 更新表格
+                possibleCombinations.forEach(comb => {
+                    document.getElementById(`count-${comb}`).textContent = '0';
+                    document.getElementById(`percent-${comb}`).textContent = '0%';
+                });
+                
+                combinationResult.innerHTML = '';
+                
+                if (resultsChart) {
+                    resultsChart.destroy();
+                    resultsChart = null;
+                }
+                
+                initializeBuckets();
+                updateChart();
+            }
+            
+            // 添加事件监听器
+            shakeButton.addEventListener('click', shakeBuckets);
+            grabButton.addEventListener('click', grabCombination);
+            autoSimulateButton.addEventListener('click', autoSimulate);
+            resetButton.addEventListener('click', resetExperiment);
+            
+            // 基因型选择变化时重置实验
+            geneType1.addEventListener('change', function() {
+                determinePossibleCombinations(this.value, geneType2.value);
+                resetExperiment();
+            });
+            geneType2.addEventListener('change', function() {
+                determinePossibleCombinations(geneType1.value, this.value);
+                resetExperiment();
+            });
+            
+            // 初始化实验
+            determinePossibleCombinations(geneType1.value, geneType2.value);
+            initializeBuckets();
+            updateChart();
+        });
+    </script>
+</body>
+</html>
